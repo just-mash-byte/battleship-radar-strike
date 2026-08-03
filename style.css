@@ -129,16 +129,20 @@ header h1 {
 .boards-wrapper {
   display: flex;
   justify-content: center;
-  gap: 24px;
-  flex-wrap: wrap;
+  gap: 20px;
+  flex-wrap: nowrap;
   margin-bottom: 24px;
+  overflow-x: auto;
 }
 
 .board-panel {
   background: #030a06;
   border: 1px solid #1e4030;
-  padding: 14px;
+  padding: 10px;
   position: relative;
+  flex: 1 1 0;
+  min-width: 280px;
+  max-width: 440px;
 }
 
 .board-panel::before,
@@ -167,11 +171,12 @@ header h1 {
 .radar-grid {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  gap: 2px;
+  gap: 18px;
   background: #000;
-  padding: 6px;
+  padding: 8px;
   position: relative;
   overflow: hidden;
+  border: 1px solid #163825;
 }
 
 .radar-grid::before {
@@ -193,10 +198,9 @@ header h1 {
 }
 
 .radar-cell {
-  width: 34px;
-  height: 34px;
   background: #0a1a10;
-  border: 1px solid #163825;
+  border: 1px solid #1e4030;
+  border-radius: 2px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -220,14 +224,39 @@ header h1 {
 .radar-cell.hit {
   background: #2a0808;
   border-color: #ff3b3b;
+  overflow: visible;
 }
 
 .radar-cell.hit::after {
-  content: '✕';
-  color: #ff3b3b;
-  font-weight: 900;
-  font-size: 1.1rem;
-  animation: hitPulse 0.4s ease;
+  content: '💥';
+  font-size: 1.3rem;
+  animation: blastPulse 0.4s ease;
+  filter: drop-shadow(0 0 6px #ff5b3b);
+}
+
+@keyframes blastPulse {
+  0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+  50% { transform: scale(1.4) rotate(10deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Optional: radiating shockwave ring behind the blast */
+.radar-cell.hit::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 100%;
+  height: 100%;
+  border: 2px solid rgba(255, 91, 59, 0.6);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  animation: shockwave 0.5s ease-out;
+  pointer-events: none;
+}
+
+@keyframes shockwave {
+  0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
 }
 
 .radar-cell.miss {
@@ -256,14 +285,22 @@ header h1 {
   100% { transform: scale(1) rotate(0deg); }
 }
 
-/* Ensure no separate/conflicting sweep rule remains for enemy board only */
+/* Remove any override that disabled enemy board sweep */
 #enemy-board::before {
-  /* intentionally empty — sweep now comes from shared .radar-grid::before */
-  content: none;
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 250%;
+  height: 250%;
+  background: conic-gradient(from 0deg, rgba(0,255,136,0.25), transparent 35deg, transparent 360deg);
+  animation: boardSweep 2.5s linear infinite;
+  pointer-events: none;
+  transform-origin: center;
+  transform: translate(-50%, -50%);
 }
 
-/* Shared sweep for BOTH boards (enemy + own) */
-.radar-grid::before {
+/* Shared sweep for own board too */
+#own-board::before {
   content: '';
   position: absolute;
   top: 50%; left: 50%;
@@ -497,7 +534,16 @@ header h1 {
   margin-bottom: 14px;
 }
 
-.placement-grid { margin: 0 auto 16px; width: fit-content; }
+.placement-grid {
+  margin: 0 auto 16px;
+  width: fit-content;
+}
+
+.placement-grid .radar-cell {
+  width: 34px;
+  height: 34px;
+  aspect-ratio: unset;
+}
 
 /* ---------------- Modal ---------------- */
 .modal {
@@ -616,11 +662,18 @@ header h1 {
 
 /* ---------------- Responsive ---------------- */
 @media (max-width: 700px) {
-  .boards-wrapper { flex-direction: column; align-items: center; }
+  .boards-wrapper { flex-wrap: wrap; }
+  .board-panel { min-width: 45%; }
 }
 
 @media (max-width: 400px) {
   header h1 { font-size: 1.1rem; letter-spacing: 1px; }
   .radar-cell { width: 26px; height: 26px; }
   .stats-bar { gap: 8px; font-size: 0.7rem; flex-wrap: wrap; }
+}
+
+/* Battle boards - responsive full width cells */
+.board-panel .radar-cell {
+  width: 100%;
+  aspect-ratio: 1 / 1;
 }

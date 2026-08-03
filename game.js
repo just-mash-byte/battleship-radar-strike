@@ -3,15 +3,15 @@ const starCanvas = document.getElementById('stars');
 const ctx = starCanvas.getContext('2d');
 let bgWidth, bgHeight;
 let drops = [];
-const rainChars = '01アイウエオカキクケコサシスセソ0123456789';
+const rainChars = '•●◦∙⁍';
 
 function resizeCanvas() {
   starCanvas.width = window.innerWidth;
   starCanvas.height = window.innerHeight;
   bgWidth = starCanvas.width;
   bgHeight = starCanvas.height;
-  const columns = Math.floor(bgWidth / 22);
-  drops = Array.from({ length: columns }, () => Math.random() * -bgHeight / 22);
+  const columns = Math.floor(bgWidth / 30);
+  drops = Array.from({ length: columns }, () => Math.random() * -bgHeight / 30);
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
@@ -19,22 +19,32 @@ resizeCanvas();
 let rainFrameCount = 0;
 
 function drawRain() {
-  ctx.fillStyle = 'rgba(0, 5, 3, 0.05)';
+  ctx.fillStyle = 'rgba(0, 5, 3, 0.15)';
   ctx.fillRect(0, 0, bgWidth, bgHeight);
 
   rainFrameCount++;
-  if (rainFrameCount % 3 !== 0) return; // slow down update rate
+  if (rainFrameCount % 4 !== 0) return;
 
-  ctx.font = '14px monospace';
   for (let i = 0; i < drops.length; i++) {
-    const char = rainChars[Math.floor(Math.random() * rainChars.length)];
-    const x = i * 22;
-    const y = drops[i] * 22;
+    const x = i * 30 + 10;
+    const y = drops[i] * 30;
 
-    ctx.fillStyle = 'rgba(0, 255, 136, 0.35)';
-    ctx.fillText(char, x, y);
+    // Glow trail
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, 6);
+    gradient.addColorStop(0, 'rgba(0, 255, 136, 0.9)');
+    gradient.addColorStop(1, 'rgba(0, 255, 136, 0)');
+    ctx.beginPath();
+    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = gradient;
+    ctx.fill();
 
-    if (y > bgHeight && Math.random() > 0.985) {
+    // Bright core
+    ctx.beginPath();
+    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(180, 255, 220, 1)';
+    ctx.fill();
+
+    if (y > bgHeight && Math.random() > 0.98) {
       drops[i] = 0;
     }
     drops[i]++;
