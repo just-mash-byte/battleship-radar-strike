@@ -1,34 +1,51 @@
-// ---------------- STARFIELD ----------------
+// ---------------- MATRIX RAIN BACKGROUND ----------------
 const starCanvas = document.getElementById('stars');
 const ctx = starCanvas.getContext('2d');
-let stars = [];
+let bgWidth, bgHeight;
+let drops = [];
+const rainChars = '01アイウエオカキクケコサシスセソ0123456789';
 
 function resizeCanvas() {
   starCanvas.width = window.innerWidth;
   starCanvas.height = window.innerHeight;
-  stars = Array.from({ length: 80 }, () => ({
-    x: Math.random() * starCanvas.width,
-    y: Math.random() * starCanvas.height,
-    r: Math.random() * 1.2 + 0.3,
-    alpha: Math.random(),
-  }));
+  bgWidth = starCanvas.width;
+  bgHeight = starCanvas.height;
+  const columns = Math.floor(bgWidth / 22);
+  drops = Array.from({ length: columns }, () => Math.random() * -bgHeight / 22);
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-function animateStars() {
-  ctx.clearRect(0, 0, starCanvas.width, starCanvas.height);
-  for (const s of stars) {
-    s.alpha += (Math.random() - 0.5) * 0.04;
-    s.alpha = Math.max(0.05, Math.min(0.6, s.alpha));
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(0,255,136,${s.alpha * 0.5})`;
-    ctx.fill();
+let rainFrameCount = 0;
+
+function drawRain() {
+  ctx.fillStyle = 'rgba(0, 5, 3, 0.05)';
+  ctx.fillRect(0, 0, bgWidth, bgHeight);
+
+  rainFrameCount++;
+  if (rainFrameCount % 3 !== 0) return; // slow down update rate
+
+  ctx.font = '14px monospace';
+  for (let i = 0; i < drops.length; i++) {
+    const char = rainChars[Math.floor(Math.random() * rainChars.length)];
+    const x = i * 22;
+    const y = drops[i] * 22;
+
+    ctx.fillStyle = 'rgba(0, 255, 136, 0.35)';
+    ctx.fillText(char, x, y);
+
+    if (y > bgHeight && Math.random() > 0.985) {
+      drops[i] = 0;
+    }
+    drops[i]++;
   }
-  requestAnimationFrame(animateStars);
 }
-animateStars();
+
+function animateBackground() {
+  drawRain();
+  requestAnimationFrame(animateBackground);
+}
+animateBackground();
 
 // ---------------- SOUND ----------------
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
