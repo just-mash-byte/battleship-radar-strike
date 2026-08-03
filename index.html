@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22none%22 stroke=%22%2300ff88%22 stroke-width=%228%22/><circle cx=%2250%22 cy=%2250%22 r=%228%22 fill=%22%2300ff88%22/></svg>">
+<title>Battleship: Radar Strike</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="stars"></canvas>
+
+<!-- ---------------- START SCREEN ---------------- -->
+<div id="start-screen" class="start-screen">
+  <div class="start-card">
+    <div class="hackathon-badge">🏆 WIG 2026 · Hackathon #02</div>
+    <h1>📡 BATTLESHIP: <span class="neon-green">RADAR</span> <span class="neon-red">STRIKE</span></h1>
+    <p class="subtitle">Scan. Target. Sink the fleet.</p>
+    <button id="start-btn" class="primary-btn">▶ Start Game</button>
+    <p class="credit-line">Built by Team Mash · HCET · WIG 2026</p>
+  </div>
+</div>
+
+<!-- ---------------- MODE SELECT SCREEN ---------------- -->
+<div id="mode-screen" class="start-screen hidden">
+  <div class="start-card">
+    <h2>Choose Game Mode</h2>
+    <div class="mode-options">
+      <button id="mode-ai-btn" class="option-btn">🤖 Play vs AI Commander</button>
+    </div>
+    <button id="back-to-start-btn" class="secondary-btn">← Back</button>
+  </div>
+</div>
+
+<!-- ---------------- AI DIFFICULTY SCREEN ---------------- -->
+<div id="difficulty-screen" class="start-screen hidden">
+  <div class="start-card">
+    <h2>Choose AI Difficulty</h2>
+    <div class="mode-options">
+      <button id="diff-easy-btn" class="option-btn">😊 Easy</button>
+      <button id="diff-medium-btn" class="option-btn">😐 Medium</button>
+      <button id="diff-hard-btn" class="option-btn">😈 Hard</button>
+    </div>
+    <button id="back-to-mode-from-diff-btn" class="secondary-btn">← Back</button>
+  </div>
+</div>
+
+<!-- ---------------- NAME ENTRY SCREEN ---------------- -->
+<div id="name-screen" class="start-screen hidden">
+  <div class="start-card">
+    <h2>Enter Your Callsign</h2>
+    <div class="name-inputs">
+      <label>
+        <span class="neon-green">Commander Name</span>
+        <input type="text" id="player1-name" placeholder="e.g. Alex" maxlength="14">
+      </label>
+    </div>
+    <button id="confirm-names-btn" class="primary-btn">Deploy Fleet ▶</button>
+    <button id="back-to-mode-btn" class="secondary-btn">← Back</button>
+  </div>
+</div>
+
+<!-- ---------------- SHIP PLACEMENT SCREEN ---------------- -->
+<div id="placement-screen" class="start-screen hidden">
+  <div class="placement-card">
+    <h2>🚢 Deploy Your Fleet</h2>
+    <p class="placement-hint" id="placement-hint">Placing: Carrier (5 cells) — Click a cell, then rotate if needed</p>
+    <div class="placement-controls">
+      <button id="rotate-btn" class="secondary-btn small">🔄 Rotate</button>
+      <button id="random-place-btn" class="secondary-btn small">🎲 Auto-Place</button>
+    </div>
+    <div id="placement-board" class="radar-grid placement-grid"></div>
+    <button id="confirm-placement-btn" class="primary-btn" disabled>Confirm Fleet ▶</button>
+  </div>
+</div>
+
+<div class="app hidden" id="app">
+  <header>
+    <h1>📡 BATTLESHIP: <span class="neon-green">RADAR</span> <span class="neon-red">STRIKE</span></h1>
+    <p class="subtitle">Scan. Target. Sink the fleet.</p>
+  </header>
+
+  <div class="stats-bar">
+    <div class="stat-item">⏱ <span id="game-timer">00:00</span></div>
+    <div class="stat-item">🎯 Shots <span id="move-counter">0</span></div>
+    <button id="sound-toggle-btn" class="sound-btn" title="Mute/Unmute">🔊</button>
+  </div>
+
+  <div class="turn-indicator" id="turn-indicator">Your Turn — Fire at Enemy Waters</div>
+
+  <div class="boards-wrapper">
+    <div class="board-panel">
+      <h3 class="board-label enemy-label">🎯 Enemy Waters</h3>
+      <div id="enemy-board" class="radar-grid"></div>
+      <div class="fleet-status" id="enemy-fleet-status"></div>
+    </div>
+    <div class="board-panel">
+      <h3 class="board-label own-label">🛡 Your Fleet</h3>
+      <div id="own-board" class="radar-grid"></div>
+      <div class="fleet-status" id="own-fleet-status"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="new-game-btn">🔄 New Game</button>
+    <button id="how-to-play-btn">📖 How to Play</button>
+  </div>
+</div>
+
+<div id="how-to-play-modal" class="modal hidden">
+  <div class="modal-content">
+    <h2>📖 How to Play</h2>
+
+    <div class="demo-section">
+      <p id="demo-caption" class="demo-caption">Watch how targeting works:</p>
+      <div id="demo-board" class="demo-board"></div>
+    </div>
+
+    <ul>
+      <li><b>Deploy your fleet</b> — place 5 ships of different sizes on your grid before battle begins.</li>
+      <li>Take turns firing at the <b>enemy grid</b> by clicking a cell.</li>
+      <li>🔴 <b>Red</b> = Hit! 💧 <b>Blue</b> = Miss.</li>
+      <li>Sink a ship by hitting <b>all its cells</b>.</li>
+      <li>First to sink the entire enemy fleet wins!</li>
+    </ul>
+    <button id="close-modal-btn">Got it!</button>
+  </div>
+</div>
+
+<div id="winner-overlay" class="winner-overlay hidden">
+  <div class="winner-card">
+    <h2 id="winner-text">🏆 Victory!</h2>
+    <p id="winner-score"></p>
+    <button id="play-again-btn">Play Again</button>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
