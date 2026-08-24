@@ -666,7 +666,7 @@ document.getElementById('join-room-btn').addEventListener('click', () => {
 document.getElementById('back-to-online-btn').addEventListener('click', () => showScreen(onlineScreen));
 
 document.getElementById('confirm-join-btn').addEventListener('click', () => {
-  const code = document.getElementById('room-code-input').value.trim().toUpperCase();
+  const code = document.getElementById('room-code-input').value.trim();
   if (!code) return;
   joinOnlineRoom(code);
 });
@@ -749,7 +749,7 @@ function createOnlineRoom() {
 }
 
 function joinOnlineRoom(code) {
-  const peerId = code.trim().toLowerCase();
+  const peerId = code.trim();
   document.getElementById('join-status').textContent = '⏳ Connecting...';
 
   peer = new Peer();
