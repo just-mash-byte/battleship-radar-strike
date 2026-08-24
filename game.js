@@ -369,36 +369,83 @@ function playerFire(row, col) {
 }
 
 function aiTurn() {
-  if (!gameActive === false) {} // no-op guard
+  if (!gameActive) return;
   let row, col;
 
   if (aiTargetQueue.length > 0) {
-    [row, col] = aiTargetQueue.shift();
+    // pop targets from queue, skip already-fired cells
+    while (aiTargetQueue.length > 0) {
+      [row, col] = aiTargetQueue.shift();
+      if (playerGrid[row][col] !== 'miss' && !(playerGrid[row][col] && playerGrid[row][col].hit)) break;
+      row = null;
+    }
+    if (row === null) { aiTurn(); return; }
   } else {
-    do {
-      row = Math.floor(Math.random() * SIZE);
-      col = Math.floor(Math.random() * SIZE);
-    } while (playerGrid[row][col] === 'miss' || (playerGrid[row][col] && playerGrid[row][col].hit));
+    if (aiDifficulty === 'hard') {
+      // Checkerboard pattern: only fire on cells where (row+col) is even
+      // This is optimal since smallest ship is size 2
+      let candidates = [];
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if ((r + c) % 2 === 0 && playerGrid[r][c] !== 'miss' && !(playerGrid[r][c] && playerGrid[r][c].hit)) {
+            candidates.push([r, c]);
+          }
+        }
+      }
+      // If no checkerboard cells left, fall back to any unfired cell
+      if (candidates.length === 0) {
+        for (let r = 0; r < SIZE; r++) {
+          for (let c = 0; c < SIZE; c++) {
+            if (playerGrid[r][c] !== 'miss' && !(playerGrid[r][c] && playerGrid[r][c].hit)) {
+              candidates.push([r, c]);
+            }
+          }
+        }
+      }
+      [row, col] = candidates[Math.floor(Math.random() * candidates.length)];
+    } else {
+      // Easy / Medium: random
+      do {
+        row = Math.floor(Math.random() * SIZE);
+        col = Math.floor(Math.random() * SIZE);
+      } while (playerGrid[row][col] === 'miss' || (playerGrid[row][col] && playerGrid[row][col].hit));
+    }
   }
 
   const outcome = fireAt(playerGrid, playerShips, row, col);
-  if (!outcome) { gameActive = true; aiTurn(); return; }
+  if (!outcome) { aiTurn(); return; }
 
   if (outcome.result === 'hit') {
     playHitSound();
-    if (aiDifficulty !== 'easy') {
-      // add adjacent cells to target queue for smarter AI
-      const neighbors = [[row-1,col],[row+1,col],[row,col-1],[row,col+1]];
-      for (const [nr, nc] of neighbors) {
-        if (inBounds(nr, nc) && playerGrid[nr][nc] !== 'miss' && !(playerGrid[nr][nc] && playerGrid[nr][nc].hit)) {
-          aiTargetQueue.push([nr, nc]);
-        }
-      }
-    }
     if (outcome.sunk) {
       playSinkSound();
       showToast(`⚠️ Your ${outcome.shipName} was sunk!`);
       aiTargetQueue = [];
+      aiLastHit = null;
+    } else if (aiDifficulty !== 'easy') {
+      if (aiLastHit && aiDifficulty === 'hard') {
+        // Direction locking: continue along the axis of previous hit
+        const dr = row - aiLastHit[0];
+        const dc = col - aiLastHit[1];
+        const next = [row + dr, col + dc];
+        const back = [aiLastHit[0] - dr, aiLastHit[1] - dc];
+        aiTargetQueue = [];
+        if (inBounds(next[0], next[1]) && playerGrid[next[0]][next[1]] !== 'miss' && !(playerGrid[next[0]][next[1]] && playerGrid[next[0]][next[1]].hit)) {
+          aiTargetQueue.push(next);
+        }
+        if (inBounds(back[0], back[1]) && playerGrid[back[0]][back[1]] !== 'miss' && !(playerGrid[back[0]][back[1]] && playerGrid[back[0]][back[1]].hit)) {
+          aiTargetQueue.push(back);
+        }
+      } else {
+        // First hit: queue all 4 neighbors
+        const neighbors = [[row-1,col],[row+1,col],[row,col-1],[row,col+1]];
+        for (const [nr, nc] of neighbors) {
+          if (inBounds(nr, nc) && playerGrid[nr][nc] !== 'miss' && !(playerGrid[nr][nc] && playerGrid[nr][nc].hit)) {
+            aiTargetQueue.push([nr, nc]);
+          }
+        }
+      }
+      aiLastHit = [row, col];
     }
   } else {
     playMissSound();
@@ -552,10 +599,14 @@ function endGame(playerWon) {
 }
 
 function newGame() {
+  stopTimer();
+  gameActive = false;
   playerGrid = createEmptyGrid();
   playerShips = [];
   enemyGrid = createEmptyGrid();
   enemyShips = [];
+  aiTargetQueue = [];
+  aiLastHit = null;
   placementShipIndex = 0;
   placementOrientation = 'horizontal';
   iAmReady = false;
