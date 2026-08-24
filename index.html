@@ -6,11 +6,12 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22none%22 stroke=%22%2300ff88%22 stroke-width=%228%22/><circle cx=%2250%22 cy=%2250%22 r=%228%22 fill=%22%2300ff88%22/></svg>">
 <title>Battleship: Radar Strike</title>
 <link rel="stylesheet" href="style.css">
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
 <canvas id="stars"></canvas>
 
-<!-- ---------------- START SCREEN ---------------- -->
+<!-- START SCREEN -->
 <div id="start-screen" class="start-screen">
   <div class="start-card">
     <div class="hackathon-badge">🏆 WIG 2026 · Hackathon #02</div>
@@ -21,18 +22,19 @@
   </div>
 </div>
 
-<!-- ---------------- MODE SELECT SCREEN ---------------- -->
+<!-- MODE SELECT -->
 <div id="mode-screen" class="start-screen hidden">
   <div class="start-card">
     <h2>Choose Game Mode</h2>
     <div class="mode-options">
       <button id="mode-ai-btn" class="option-btn">🤖 Play vs AI Commander</button>
+      <button id="mode-online-btn" class="option-btn">🌐 Online Multiplayer</button>
     </div>
     <button id="back-to-start-btn" class="secondary-btn">← Back</button>
   </div>
 </div>
 
-<!-- ---------------- AI DIFFICULTY SCREEN ---------------- -->
+<!-- AI DIFFICULTY -->
 <div id="difficulty-screen" class="start-screen hidden">
   <div class="start-card">
     <h2>Choose AI Difficulty</h2>
@@ -45,7 +47,7 @@
   </div>
 </div>
 
-<!-- ---------------- NAME ENTRY SCREEN ---------------- -->
+<!-- NAME ENTRY (AI) -->
 <div id="name-screen" class="start-screen hidden">
   <div class="start-card">
     <h2>Enter Your Callsign</h2>
@@ -60,11 +62,56 @@
   </div>
 </div>
 
-<!-- ---------------- SHIP PLACEMENT SCREEN ---------------- -->
+<!-- ONLINE LOBBY -->
+<div id="online-screen" class="start-screen hidden">
+  <div class="start-card">
+    <h2>🌐 Online Multiplayer</h2>
+    <div class="name-inputs">
+      <label>
+        <span class="neon-green">Your Callsign</span>
+        <input type="text" id="online-name" placeholder="e.g. Alex" maxlength="14">
+      </label>
+    </div>
+    <div class="mode-options" style="margin-top:16px;">
+      <button id="create-room-btn" class="option-btn">🛡 Create Game (Host)</button>
+      <button id="join-room-btn" class="option-btn">⚔️ Join Game</button>
+    </div>
+    <button id="back-to-mode-from-online-btn" class="secondary-btn">← Back</button>
+  </div>
+</div>
+
+<!-- JOIN ROOM -->
+<div id="join-screen" class="start-screen hidden">
+  <div class="start-card">
+    <h2>⚔️ Join Game</h2>
+    <div class="name-inputs">
+      <label>
+        <span class="neon-green">Room Code (from host)</span>
+        <input type="text" id="room-code-input" placeholder="Enter code" maxlength="20" style="text-transform:uppercase; letter-spacing:2px;">
+      </label>
+    </div>
+    <button id="confirm-join-btn" class="primary-btn">Connect ▶</button>
+    <p id="join-status" class="demo-caption" style="margin-top:12px;"></p>
+    <button id="back-to-online-btn" class="secondary-btn">← Back</button>
+  </div>
+</div>
+
+<!-- WAITING ROOM (host) -->
+<div id="waiting-screen" class="start-screen hidden">
+  <div class="start-card">
+    <h2>🛡 Waiting for Opponent</h2>
+    <p class="placement-hint">Share this Room Code with your opponent:</p>
+    <div id="room-code-display" style="font-size:2rem;font-weight:900;color:#00ff88;letter-spacing:4px;text-shadow:0 0 16px #00ff88;margin:20px 0;word-break:break-all;"></div>
+    <p class="demo-caption" id="waiting-status">⏳ Waiting for opponent to join...</p>
+    <button id="copy-code-btn" class="secondary-btn small" style="width:100%;margin-top:8px;">📋 Copy Room Code</button>
+  </div>
+</div>
+
+<!-- SHIP PLACEMENT -->
 <div id="placement-screen" class="start-screen hidden">
   <div class="placement-card">
-    <h2>🚢 Deploy Your Fleet</h2>
-    <p class="placement-hint" id="placement-hint">Placing: Carrier (5 cells) — Click a cell, then rotate if needed</p>
+    <h2 id="placement-title">🚢 Deploy Your Fleet</h2>
+    <p class="placement-hint" id="placement-hint">Placing: Carrier (5 cells)</p>
     <div class="placement-controls">
       <button id="rotate-btn" class="secondary-btn small">🔄 Rotate</button>
       <button id="random-place-btn" class="secondary-btn small">🎲 Auto-Place</button>
@@ -74,10 +121,20 @@
   </div>
 </div>
 
+<!-- WAITING FOR OPPONENT TO PLACE (Online) -->
+<div id="waiting-placement-screen" class="start-screen hidden">
+  <div class="start-card">
+    <h2>⏳ Waiting for Opponent</h2>
+    <p class="placement-hint">Your fleet is deployed. Waiting for opponent...</p>
+    <div class="radar-spinner"></div>
+  </div>
+</div>
+
+<!-- GAME BOARD -->
 <div class="app hidden" id="app">
   <header>
     <h1>📡 BATTLESHIP: <span class="neon-green">RADAR</span> <span class="neon-red">STRIKE</span></h1>
-    <p class="subtitle">Scan. Target. Sink the fleet.</p>
+    <p id="online-status-bar" class="subtitle"></p>
   </header>
 
   <div class="stats-bar">
@@ -89,12 +146,12 @@
   <div class="turn-indicator" id="turn-indicator">Your Turn — Fire at Enemy Waters</div>
 
   <div class="boards-wrapper">
-    <div class="board-panel">
+    <div class="board-panel" id="enemy-panel">
       <h3 class="board-label enemy-label">🎯 Enemy Waters</h3>
       <div id="enemy-board" class="radar-grid"></div>
       <div class="fleet-status" id="enemy-fleet-status"></div>
     </div>
-    <div class="board-panel">
+    <div class="board-panel" id="own-panel">
       <h3 class="board-label own-label">🛡 Your Fleet</h3>
       <div id="own-board" class="radar-grid"></div>
       <div class="fleet-status" id="own-fleet-status"></div>
@@ -107,19 +164,18 @@
   </div>
 </div>
 
+<!-- HOW TO PLAY -->
 <div id="how-to-play-modal" class="modal hidden">
   <div class="modal-content">
     <h2>📖 How to Play</h2>
-
     <div class="demo-section">
       <p id="demo-caption" class="demo-caption">Watch how targeting works:</p>
       <div id="demo-board" class="demo-board"></div>
     </div>
-
     <ul>
-      <li><b>Deploy your fleet</b> — place 5 ships of different sizes on your grid before battle begins.</li>
+      <li><b>Deploy your fleet</b> — place 5 ships on your grid before battle.</li>
       <li>Take turns firing at the <b>enemy grid</b> by clicking a cell.</li>
-      <li>🔴 <b>Red</b> = Hit! 💧 <b>Blue</b> = Miss.</li>
+      <li>💥 <b>Blast</b> = Hit! <b>·</b> = Miss.</li>
       <li>Sink a ship by hitting <b>all its cells</b>.</li>
       <li>First to sink the entire enemy fleet wins!</li>
     </ul>
@@ -127,6 +183,7 @@
   </div>
 </div>
 
+<!-- WINNER -->
 <div id="winner-overlay" class="winner-overlay hidden">
   <div class="winner-card">
     <h2 id="winner-text">🏆 Victory!</h2>

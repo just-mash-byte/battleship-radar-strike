@@ -168,10 +168,11 @@ header h1 {
 .enemy-label { color: #ff5b5b; }
 .own-label { color: #5bffa0; }
 
+/* ---------------- Realistic Radar Sweep ---------------- */
 .radar-grid {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  gap: 18px;
+  gap: 4px;
   background: #000;
   padding: 8px;
   position: relative;
@@ -179,22 +180,60 @@ header h1 {
   border: 1px solid #163825;
 }
 
+/* Concentric range rings (static, subtle) */
+.radar-grid::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 90%;
+  height: 90%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, transparent 0%, transparent 24%, rgba(0,255,136,0.08) 25%, transparent 26%),
+    radial-gradient(circle, transparent 0%, transparent 49%, rgba(0,255,136,0.08) 50%, transparent 51%),
+    radial-gradient(circle, transparent 0%, transparent 74%, rgba(0,255,136,0.08) 75%, transparent 76%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Rotating sweep with realistic trailing fade (not solid wedge) */
 .radar-grid::before {
   content: '';
   position: absolute;
   top: 50%; left: 50%;
-  width: 250%;
-  height: 250%;
-  background: conic-gradient(from 0deg, rgba(0,255,136,0.25), transparent 35deg, transparent 360deg);
-  animation: boardSweep 2.5s linear infinite;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(0, 255, 136, 0) 0deg,
+    rgba(0, 255, 136, 0) 300deg,
+    rgba(0, 255, 136, 0.05) 330deg,
+    rgba(0, 255, 136, 0.15) 350deg,
+    rgba(0, 255, 136, 0.55) 359deg,
+    rgba(180, 255, 220, 0.85) 360deg
+  );
+  animation: boardSweep 3.2s linear infinite;
   pointer-events: none;
   transform-origin: center;
   transform: translate(-50%, -50%);
+  z-index: 1;
+  mix-blend-mode: screen;
 }
 
 @keyframes boardSweep {
   from { transform: translate(-50%, -50%) rotate(0deg); }
   to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Bright leading edge line for the sweep */
+.board-panel {
+  position: relative;
+}
+
+.radar-cell {
+  z-index: 2;
+  position: relative;
 }
 
 .radar-cell {
@@ -676,4 +715,99 @@ header h1 {
 .board-panel .radar-cell {
   width: 100%;
   aspect-ratio: 1 / 1;
+}
+
+/* ---------------- Enemy board: RED cells, BLUE radar sweep ---------------- */
+#enemy-board {
+  border-color: #4a1e1e;
+}
+
+#enemy-board .radar-grid {
+  border-color: #5a2a2a;
+}
+
+#enemy-board .radar-cell {
+  background: #2a0a0a;
+  border-color: #6b2e2e;
+}
+
+#enemy-board .radar-cell:hover:not(.disabled) {
+  background: #3a0d0d;
+  box-shadow: inset 0 0 12px #ff3b3b88;
+}
+
+#enemy-board .radar-cell.ship {
+  background: #3e1212;
+  border-color: #8a3232;
+}
+
+#enemy-board .radar-cell.miss {
+  background: #1a1a1a;
+  border-color: #555;
+}
+
+#enemy-board .radar-cell.hit {
+  background: #4a0a0a;
+  border-color: #ff5b3b;
+}
+
+/* Blue radar rings on red board */
+#enemy-board .radar-grid::after {
+  background:
+    radial-gradient(circle, transparent 0%, transparent 24%, rgba(59,130,246,0.15) 25%, transparent 26%),
+    radial-gradient(circle, transparent 0%, transparent 49%, rgba(59,130,246,0.15) 50%, transparent 51%),
+    radial-gradient(circle, transparent 0%, transparent 74%, rgba(59,130,246,0.15) 75%, transparent 76%);
+}
+
+/* Blue radar sweep on red board */
+#enemy-board .radar-grid::before {
+  background: conic-gradient(
+    from 0deg,
+    rgba(59, 130, 246, 0) 0deg,
+    rgba(59, 130, 246, 0) 300deg,
+    rgba(59, 130, 246, 0.12) 330deg,
+    rgba(59, 130, 246, 0.35) 350deg,
+    rgba(59, 130, 246, 0.75) 359deg,
+    rgba(200, 225, 255, 0.95) 360deg
+  );
+  mix-blend-mode: screen;
+}
+
+#enemy-board::before,
+#enemy-board::after {
+  border-color: #ff3b3b;
+}
+
+.enemy-label {
+  color: #ff3b3b;
+  text-shadow: 0 0 8px #ff3b3b;
+}
+
+/* ---------------- Own board = FULL GREEN radar theme ---------------- */
+#own-board {
+  border-color: #1e4030;
+}
+
+#own-board .radar-grid {
+  border-color: #1e4030;
+}
+
+#own-board .radar-cell {
+  background: #0a1a10;
+  border-color: #1e4030;
+}
+
+#own-board .radar-cell:hover:not(.disabled) {
+  background: #0f2a1a;
+  box-shadow: inset 0 0 10px #00ff8866;
+}
+
+#own-board .radar-cell.ship {
+  background: #142e1e;
+  border-color: #2e6b48;
+}
+
+.own-label {
+  color: #00ff88;
+  text-shadow: 0 0 8px #00ff88;
 }
