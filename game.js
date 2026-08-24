@@ -720,15 +720,17 @@ function generateRoomCode() {
 }
 
 function createOnlineRoom() {
-  const roomCode = generateRoomCode();
-  document.getElementById('room-code-display').textContent = roomCode;
-  document.getElementById('waiting-status').textContent = '⏳ Waiting for opponent to join...';
+  document.getElementById('room-code-display').textContent = '⏳ Getting room code...';
+  document.getElementById('waiting-status').textContent = '⏳ Connecting to server...';
   showScreen(waitingScreen);
 
-  peer = new Peer(roomCode);
+  peer = new Peer(); // Let PeerJS auto-generate a reliable ID
 
-  peer.on('open', () => {
-    console.log('Peer open, room code:', roomCode);
+  peer.on('open', (id) => {
+    // Display the auto-generated ID as the room code
+    document.getElementById('room-code-display').textContent = id;
+    document.getElementById('waiting-status').textContent = '⏳ Waiting for opponent to join...';
+    console.log('Room code (peer ID):', id);
   });
 
   peer.on('connection', (connection) => {
@@ -741,17 +743,19 @@ function createOnlineRoom() {
   });
 
   peer.on('error', (err) => {
+    document.getElementById('waiting-status').textContent = '❌ Server error: ' + err.type;
     showToast('⚠️ Connection error: ' + err.type);
   });
 }
 
 function joinOnlineRoom(code) {
+  const peerId = code.trim().toLowerCase();
   document.getElementById('join-status').textContent = '⏳ Connecting...';
 
   peer = new Peer();
 
   peer.on('open', () => {
-    conn = peer.connect(code);
+    conn = peer.connect(peerId);
 
     conn.on('open', () => {
       document.getElementById('join-status').textContent = '✅ Connected!';
@@ -761,13 +765,13 @@ function joinOnlineRoom(code) {
       }, 600);
     });
 
-    conn.on('error', (err) => {
+    conn.on('error', () => {
       document.getElementById('join-status').textContent = '❌ Could not connect. Check the code.';
     });
   });
 
-  peer.on('error', () => {
-    document.getElementById('join-status').textContent = '❌ Connection failed. Try again.';
+  peer.on('error', (err) => {
+    document.getElementById('join-status').textContent = '❌ Connection failed: ' + err.type;
   });
 }
 
