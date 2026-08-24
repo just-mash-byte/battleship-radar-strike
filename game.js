@@ -860,6 +860,7 @@ function handleOnlineMessage(data) {
     } else {
       onlineMyTurn = true;
       updateTurnIndicator(true);
+      renderBattleBoards(); // re-add click listeners now it's my turn
     }
   }
 
