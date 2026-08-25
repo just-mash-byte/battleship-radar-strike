@@ -229,7 +229,12 @@ function renderPlacementBoard() {
     for (let c = 0; c < SIZE; c++) {
       const cellEl = document.createElement('div');
       cellEl.className = 'radar-cell';
-      if (playerGrid[r][c]) cellEl.classList.add('ship');
+      if (playerGrid[r][c]) {
+        cellEl.classList.add('ship');
+        cellEl.style.background = 'linear-gradient(135deg, #0a6b2e 0%, #1dbe52 100%)';
+        cellEl.style.borderColor = '#00ff88';
+        cellEl.style.boxShadow = 'inset 0 0 14px rgba(0,255,136,0.6), 0 0 8px rgba(0,255,136,0.35)';
+      }
       cellEl.addEventListener('click', () => tryPlaceAtCell(r, c));
       cellEl.addEventListener('mouseenter', () => previewPlacement(r, c));
       cellEl.addEventListener('mouseleave', () => renderPlacementBoard());
