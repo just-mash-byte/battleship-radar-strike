@@ -256,8 +256,9 @@ header h1 {
 .radar-cell.disabled { cursor: not-allowed; }
 
 .radar-cell.ship {
-  background: #142e1e;
-  border-color: #2e6b48;
+  background: linear-gradient(135deg, #0e5c30 0%, #1a8a4a 100%);
+  border-color: #00ff88;
+  box-shadow: inset 0 0 10px rgba(0,255,136,0.3), 0 0 6px rgba(0,255,136,0.15);
 }
 
 .radar-cell.hit {
@@ -803,8 +804,9 @@ header h1 {
 }
 
 #own-board .radar-cell.ship {
-  background: #142e1e;
-  border-color: #2e6b48;
+  background: linear-gradient(135deg, #0e5c30 0%, #1a8a4a 100%);
+  border-color: #00ff88;
+  box-shadow: inset 0 0 10px rgba(0,255,136,0.3), 0 0 6px rgba(0,255,136,0.15);
 }
 
 .own-label {
