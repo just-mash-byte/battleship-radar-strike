@@ -372,40 +372,52 @@ function aiTurn() {
   if (!gameActive) return;
   let row, col;
 
-  // Drain queue of already-fired cells
-  while (aiTargetQueue.length > 0) {
-    const [r, c] = aiTargetQueue[0];
-    if (playerGrid[r][c] !== 'miss' && !(playerGrid[r][c] && playerGrid[r][c].hit)) break;
+  // Helper: cell is fireable
+  function canFire(r, c) {
+    return inBounds(r, c) && playerGrid[r][c] !== 'miss' && !(playerGrid[r][c] && playerGrid[r][c].hit);
+  }
+
+  // Drain stale cells from queue
+  while (aiTargetQueue.length > 0 && !canFire(aiTargetQueue[0][0], aiTargetQueue[0][1])) {
     aiTargetQueue.shift();
   }
 
   if (aiTargetQueue.length > 0) {
     [row, col] = aiTargetQueue.shift();
   } else {
-    // Build list of all valid unfired cells
-    const unfired = [];
-    for (let r = 0; r < SIZE; r++) {
-      for (let c = 0; c < SIZE; c++) {
-        if (playerGrid[r][c] !== 'miss' && !(playerGrid[r][c] && playerGrid[r][c].hit)) {
-          unfired.push([r, c]);
-        }
-      }
-    }
-    if (unfired.length === 0) return; // no moves left
-
+    // Hunt mode
     if (aiDifficulty === 'hard') {
-      // Checkerboard: prefer cells where (r+c) % 2 === 0
-      const checker = unfired.filter(([r, c]) => (r + c) % 2 === 0);
-      const pool = checker.length > 0 ? checker : unfired;
-      [row, col] = pool[Math.floor(Math.random() * pool.length)];
+      // Checkerboard pattern
+      let candidates = [];
+      for (let r = 0; r < SIZE; r++)
+        for (let c = 0; c < SIZE; c++)
+          if ((r + c) % 2 === 0 && canFire(r, c)) candidates.push([r, c]);
+      if (candidates.length === 0)
+        for (let r = 0; r < SIZE; r++)
+          for (let c = 0; c < SIZE; c++)
+            if (canFire(r, c)) candidates.push([r, c]);
+      [row, col] = candidates[Math.floor(Math.random() * candidates.length)];
     } else {
-      [row, col] = unfired[Math.floor(Math.random() * unfired.length)];
+      // Easy / Medium: pure random
+      let attempts = 0;
+      do {
+        row = Math.floor(Math.random() * SIZE);
+        col = Math.floor(Math.random() * SIZE);
+        attempts++;
+        if (attempts > 200) break;
+      } while (!canFire(row, col));
     }
+  }
+
+  if (row === undefined || col === undefined || !canFire(row, col)) {
+    // Safety: no valid cell found — shouldn't happen, but skip turn
+    gameActive = true;
+    updateTurnIndicator(true);
+    return;
   }
 
   const outcome = fireAt(playerGrid, playerShips, row, col);
   if (!outcome) {
-    // Cell was already fired (race condition) — just move on
     gameActive = true;
     updateTurnIndicator(true);
     return;
@@ -419,32 +431,18 @@ function aiTurn() {
       aiTargetQueue = [];
       aiLastHit = null;
     } else if (aiDifficulty !== 'easy') {
-      if (aiLastHit !== null && aiDifficulty === 'hard') {
-        // Direction locking: continue along hit axis, also try reverse
+      if (aiLastHit && aiDifficulty === 'hard') {
+        // Direction locking — continue along hit axis
         const dr = row - aiLastHit[0];
         const dc = col - aiLastHit[1];
         aiTargetQueue = [];
-        if (dr !== 0 || dc !== 0) {
-          const fwd = [row + dr, col + dc];
-          const bck = [aiLastHit[0] - dr, aiLastHit[1] - dc];
-          if (inBounds(fwd[0], fwd[1]) && playerGrid[fwd[0]][fwd[1]] !== 'miss' && !(playerGrid[fwd[0]][fwd[1]] && playerGrid[fwd[0]][fwd[1]].hit))
-            aiTargetQueue.push(fwd);
-          if (inBounds(bck[0], bck[1]) && playerGrid[bck[0]][bck[1]] !== 'miss' && !(playerGrid[bck[0]][bck[1]] && playerGrid[bck[0]][bck[1]].hit))
-            aiTargetQueue.push(bck);
-        }
-        // fallback: if queue still empty, add all neighbors
-        if (aiTargetQueue.length === 0) {
-          for (const [nr, nc] of [[row-1,col],[row+1,col],[row,col-1],[row,col+1]]) {
-            if (inBounds(nr, nc) && playerGrid[nr][nc] !== 'miss' && !(playerGrid[nr][nc] && playerGrid[nr][nc].hit))
-              aiTargetQueue.push([nr, nc]);
-          }
-        }
+        if (canFire(row + dr, col + dc)) aiTargetQueue.push([row + dr, col + dc]);
+        if (canFire(aiLastHit[0] - dr, aiLastHit[1] - dc)) aiTargetQueue.push([aiLastHit[0] - dr, aiLastHit[1] - dc]);
       } else {
-        // First hit on this ship: queue all 4 neighbors
-        for (const [nr, nc] of [[row-1,col],[row+1,col],[row,col-1],[row,col+1]]) {
-          if (inBounds(nr, nc) && playerGrid[nr][nc] !== 'miss' && !(playerGrid[nr][nc] && playerGrid[nr][nc].hit))
-            aiTargetQueue.push([nr, nc]);
-        }
+        // First hit: queue all 4 neighbors
+        [[row-1,col],[row+1,col],[row,col-1],[row,col+1]].forEach(([nr,nc]) => {
+          if (canFire(nr, nc)) aiTargetQueue.push([nr, nc]);
+        });
       }
       aiLastHit = [row, col];
     }
