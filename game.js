@@ -363,13 +363,13 @@ function playerFire(row, col) {
     return;
   }
 
-  gameActive = false;
+  gameActive = false; // block player from firing during AI turn
   updateTurnIndicator(false);
   setTimeout(aiTurn, 700);
 }
 
 function aiTurn() {
-  if (!gameActive) return;
+  gameActive = true; // AI is now firing — game is active
   let row, col;
 
   // Helper: cell is fireable
@@ -737,12 +737,23 @@ document.getElementById('confirm-placement-btn').addEventListener('click', () =>
 });
 
 document.getElementById('new-game-btn').addEventListener('click', () => {
+  winnerOverlay.classList.add('hidden');
+  stopTimer();
+  gameActive = false;
   if (peer) { peer.destroy(); peer = null; conn = null; }
   showScreen(modeScreen);
 });
 document.getElementById('play-again-btn').addEventListener('click', () => {
+  winnerOverlay.classList.add('hidden');
+  stopTimer();
+  gameActive = false;
   if (peer) { peer.destroy(); peer = null; conn = null; }
-  showScreen(modeScreen);
+  // Same mode: skip to name entry (AI) or online lobby
+  if (gameMode === 'online') {
+    showScreen(onlineScreen);
+  } else {
+    newGame(); // jump straight back to ship placement, same difficulty
+  }
 });
 
 document.getElementById('how-to-play-btn').addEventListener('click', () => {
