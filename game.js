@@ -514,7 +514,7 @@ function renderBattleBoards() {
         cellEl.className = 'radar-cell';
         const cell = enemyGrid[r][c];
         if (cell === 'miss') cellEl.classList.add('miss');
-        else if (cell && cell.hit) cellEl.classList.add('hit');
+        else if (cell && cell.hit) cellEl.classList.add(cell.sunk ? 'sunk' : 'hit');
         else if (onlineMyTurn && gameActive) {
           cellEl.addEventListener('click', () => playerFire(r, c));
         }
@@ -905,6 +905,14 @@ function handleOnlineMessage(data) {
       playMissSound();
     }
 
+    // If ship sunk, collect all its cell coordinates to send to attacker
+    let sunkCells = null;
+    if (outcome.sunk) {
+      const hitCell = playerGrid[row][col];
+      const ship = getShipById(playerShips, hitCell.shipId);
+      if (ship) sunkCells = ship.cells.map(c => [c[0], c[1]]);
+    }
+
     const gameOver = isAllSunk(playerShips);
     sendOnlineMessage({
       type: 'fire-result',
@@ -912,6 +920,7 @@ function handleOnlineMessage(data) {
       result: outcome.result,
       sunk: outcome.sunk || false,
       shipName: outcome.shipName || null,
+      sunkCells,
       gameOver,
     });
 
@@ -927,11 +936,9 @@ function handleOnlineMessage(data) {
 
   else if (data.type === 'fire-result') {
     // I fired, got result back — update my enemy board view
-    const { row, col, result, sunk, shipName, gameOver } = data;
+    const { row, col, result, sunk, shipName, sunkCells, gameOver } = data;
 
-    // Apply result onto enemyGrid locally for rendering
     if (result === 'hit') {
-      // Find or create hit marker on enemyGrid
       if (!enemyGrid[row][col] || enemyGrid[row][col] === null) {
         enemyGrid[row][col] = { hit: true, shipId: -1 };
       } else {
@@ -941,8 +948,17 @@ function handleOnlineMessage(data) {
       if (sunk) {
         playSinkSound();
         showToast(`💥 Enemy ${shipName} sunk!`);
-        // Mark all cells of sunk ship — we'll do it visually via a separate sunk flag
-        sendOnlineMessage({ type: 'ack' }); // no-op, just in case
+        // Mark ALL cells of the sunk ship so they render as sunk (not just blast)
+        if (sunkCells) {
+          for (const [r, c] of sunkCells) {
+            if (!enemyGrid[r][c] || enemyGrid[r][c] === null) {
+              enemyGrid[r][c] = { hit: true, shipId: -1, sunk: true };
+            } else {
+              enemyGrid[r][c].hit = true;
+              enemyGrid[r][c].sunk = true;
+            }
+          }
+        }
       }
     } else {
       enemyGrid[row][col] = 'miss';
