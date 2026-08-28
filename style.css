@@ -360,22 +360,77 @@ header h1 {
 
 .fleet-status {
   margin-top: 10px;
-  font-size: 0.7rem;
-  color: #6b9a80;
   display: flex;
-  gap: 6px;
+  gap: 5px;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+/* Fleet card */
+.fleet-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 6px;
+  background: #060e08;
+  border: 1px solid var(--ship-color, #00ff88);
+  border-radius: 6px;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--ship-color, #00ff88) 25%, transparent);
+  transition: opacity 0.3s, filter 0.3s;
+}
+
+.fleet-card.sunk-ship {
+  opacity: 0.42;
+  filter: grayscale(0.7);
+  border-color: #ff3b3b;
+}
+
+.fleet-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.fleet-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fleet-name {
+  font-size: 0.6rem;
+  color: var(--ship-color, #00ff88);
   text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
-.fleet-status span {
-  padding: 3px 8px;
-  background: #0a1810;
-  border: 1px solid #1e4030;
-  clip-path: polygon(4px 0, 100% 0, 100% 100%, 0 100%, 0 4px);
+.fleet-dots {
+  display: flex;
+  gap: 3px;
 }
 
+.fleet-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 1px;
+  background: var(--ship-color, #00ff88);
+  box-shadow: 0 0 4px var(--ship-color, #00ff88);
+}
+
+.fleet-dot.dot-dead {
+  background: #ff3b3b;
+  box-shadow: 0 0 4px #ff3b3b66;
+}
+
+.sunk-badge {
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: #ff3b3b;
+  margin-left: 2px;
+}
+
+/* keep old span rule as fallback (won't conflict) */
 .fleet-status span.sunk-ship {
   color: #ff5b5b;
   border-color: #ff3b3b;

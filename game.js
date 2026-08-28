@@ -77,11 +77,11 @@ function playWinSound() {
 // ---------------- GAME CONSTANTS ----------------
 const SIZE = 8;
 const SHIPS = [
-  { name: 'Carrier', size: 5 },
-  { name: 'Battleship', size: 4 },
-  { name: 'Cruiser', size: 3 },
-  { name: 'Submarine', size: 3 },
-  { name: 'Destroyer', size: 2 },
+  { name: 'Carrier',    size: 5, icon: '✈️',  color: '#00e5ff' },
+  { name: 'Battleship', size: 4, icon: '⚔️',  color: '#ff4c4c' },
+  { name: 'Cruiser',    size: 3, icon: '🚢',  color: '#ffd700' },
+  { name: 'Submarine',  size: 3, icon: '🤿',  color: '#a78bfa' },
+  { name: 'Destroyer',  size: 2, icon: '⚡',  color: '#00ff88' },
 ];
 
 let playerName = "Commander";
@@ -268,7 +268,8 @@ function tryPlaceAtCell(row, col) {
   placementShipIndex++;
 
   if (placementShipIndex < SHIPS.length) {
-    placementHintEl.textContent = `Placing: ${SHIPS[placementShipIndex].name} (${SHIPS[placementShipIndex].size} cells)`;
+    const next = SHIPS[placementShipIndex];
+    placementHintEl.textContent = `Placing: ${next.icon} ${next.name} (${next.size} cells)`;
   } else {
     placementHintEl.textContent = '✅ All ships deployed! Confirm to start battle.';
     confirmPlacementBtn.disabled = false;
@@ -501,11 +502,46 @@ function showToast(msg) {
 
 function renderFleetStatus(ships, el) {
   el.innerHTML = '';
-  for (const ship of ships) {
-    const span = document.createElement('span');
-    span.textContent = `${ship.name} (${ship.size})`;
-    if (ship.sunk) span.classList.add('sunk-ship');
-    el.appendChild(span);
+  // Use SHIPS as reference for full info (icon, color, size); merge with live status
+  const source = ships.length ? ships : SHIPS.map(s => ({ ...s, sunk: false }));
+  for (const ship of source) {
+    const shipDef = SHIPS.find(s => s.name === ship.name) || ship;
+    const card = document.createElement('div');
+    card.className = 'fleet-card' + (ship.sunk ? ' sunk-ship' : '');
+    card.style.setProperty('--ship-color', shipDef.color || '#00ff88');
+
+    const iconEl = document.createElement('span');
+    iconEl.className = 'fleet-icon';
+    iconEl.textContent = shipDef.icon || '🚢';
+
+    const infoEl = document.createElement('div');
+    infoEl.className = 'fleet-info';
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'fleet-name';
+    nameEl.textContent = ship.name;
+
+    const dotsEl = document.createElement('span');
+    dotsEl.className = 'fleet-dots';
+    for (let i = 0; i < shipDef.size; i++) {
+      const dot = document.createElement('span');
+      dot.className = 'fleet-dot' + (ship.sunk ? ' dot-dead' : '');
+      dotsEl.appendChild(dot);
+    }
+
+    infoEl.appendChild(nameEl);
+    infoEl.appendChild(dotsEl);
+    card.appendChild(iconEl);
+    card.appendChild(infoEl);
+
+    if (ship.sunk) {
+      const sunkBadge = document.createElement('span');
+      sunkBadge.className = 'sunk-badge';
+      sunkBadge.textContent = '✕';
+      card.appendChild(sunkBadge);
+    }
+
+    el.appendChild(card);
   }
 }
 
@@ -618,7 +654,7 @@ function newGame() {
   confirmPlacementBtn.disabled = true;
   document.getElementById('placement-title').textContent =
     gameMode === 'online' ? `🚢 ${playerName} — Deploy Your Fleet` : '🚢 Deploy Your Fleet';
-  placementHintEl.textContent = `Placing: ${SHIPS[0].name} (${SHIPS[0].size} cells)`;
+  placementHintEl.textContent = `Placing: ${SHIPS[0].icon} ${SHIPS[0].name} (${SHIPS[0].size} cells)`;
   winnerOverlay.classList.add('hidden');
   showScreen(placementScreen);
   renderPlacementBoard();
