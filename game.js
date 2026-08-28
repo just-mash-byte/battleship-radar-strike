@@ -279,6 +279,8 @@ function tryPlaceAtCell(row, col) {
 
 document.getElementById('rotate-btn').addEventListener('click', () => {
   placementOrientation = placementOrientation === 'horizontal' ? 'vertical' : 'horizontal';
+  const btn = document.getElementById('rotate-btn');
+  btn.textContent = placementOrientation === 'horizontal' ? '🔄 Horizontal →' : '🔄 Vertical ↓';
 });
 
 document.getElementById('random-place-btn').addEventListener('click', () => {

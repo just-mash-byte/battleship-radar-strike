@@ -572,6 +572,40 @@ header h1 {
 
 .secondary-btn.small { width: auto; margin-top: 0; padding: 8px 14px; }
 
+/* ── Placement action buttons: Rotate & Auto-Place ── */
+#rotate-btn,
+#random-place-btn {
+  background: #050f0a;
+  border: 1px solid #00ff8866;
+  color: #00ff88;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  cursor: pointer;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  transition: background 0.15s, box-shadow 0.15s, color 0.15s, transform 0.1s;
+  user-select: none;
+}
+
+#rotate-btn:hover,
+#random-place-btn:hover {
+  background: #0a2018;
+  border-color: #00ff88;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(0, 255, 136, 0.45), inset 0 0 8px rgba(0, 255, 136, 0.15);
+}
+
+#rotate-btn:active,
+#random-place-btn:active {
+  transform: scale(0.95);
+  background: #00ff88;
+  color: #000705;
+  box-shadow: 0 0 22px rgba(0, 255, 136, 0.75);
+}
+
 .mode-options { display: flex; flex-direction: column; gap: 12px; }
 
 .option-btn {
